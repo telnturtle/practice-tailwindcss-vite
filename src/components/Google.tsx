@@ -11,10 +11,15 @@ export function Google() {
   >((ev) => {
     const formattedCardNumber = ev.currentTarget.value || ''
     const cardNumber = formattedCardNumber.replace(/\D/g, '')
-    const rawKey = (ev as unknown as KeyboardEvent).key
-    const key = rawKey.replace(/\D/g, '')
+    const key = (ev as unknown as KeyboardEvent).key
+    // const rawKey = (ev as unknown as KeyboardEvent).key
+    // const key = rawKey.replace(/\D/g, '')
 
-    if (!utils.isStringNum(key)) {
+    // console.log({first: /^.$/.test(key) , second: !/\d/.test(key)})
+    console.log({zeroth: key, first: key.length , second: !/\d/.test(key), fourth: ev.nativeEvent, final: /^.$/.test(key) && !/\d/.test(key)})
+
+    // if (/^.$/.test(key) && !/\d/.test(key)) {
+    if (key.length === 1 && !/\d/.test(key)) {
       ev.preventDefault()
     }
 
@@ -26,9 +31,9 @@ export function Google() {
     // // }
   }, [])
 
-  const handleKeyPress = (ev: unknown) => {
-    console.log(ev.key)
-  }
+  // const handleKeyPress = (ev: unknown) => {
+  //   console.log(ev.key)
+  // }
 
   // 문자키만 막는것으로 하자
 
@@ -58,9 +63,9 @@ export function Google() {
             autoComplete="cc-number"
             className="m-2 rounded p-2 ring-1 ring-gray-400"
             name="cardNumber"
-            onBeforeInput={handleBeforeInputCardNumber}
+            // onBeforeInput={handleBeforeInputCardNumber}
             // onChange={handleChangeCardNumber}
-            // onKeyDown={handleKeyDownCardNumber}
+            onKeyDown={handleKeyDownCardNumber}
             // pattern="\\d{4}\s\d{4}\s\d{4}\s\d{4}"
             pattern="[0-9]{4}"
             placeholder="카드번호"
@@ -69,7 +74,7 @@ export function Google() {
         </label>
       </div>
       <div className="flex"></div>
-      <input onKeyPress={handleKeyPress} onKeyUp={handleKeyPress}></input>
+      {/* <input onKeyPress={handleKeyPress} onKeyUp={handleKeyPress}></input> */}
     </div>
   )
 }
