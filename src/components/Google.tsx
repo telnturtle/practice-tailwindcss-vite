@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { PropsWithChildren, ReactNode, useCallback } from 'react'
 
 export function Google() {
   const handleInputCardNumber = useCallback<
@@ -34,9 +34,8 @@ export function Google() {
 
   return (
     <div className="flex flex-col">
-      <div className="flex">
-        <label className="flex w-full flex-col">
-          <span>카드번호</span>
+      <Row>
+        <LabelInput label={'카드번호'}>
           <input
             aria-label="카드번호"
             autoComplete="cc-number"
@@ -47,9 +46,24 @@ export function Google() {
             placeholder="카드번호"
             type="tel"
           ></input>
-        </label>
-      </div>
-      <div className="flex"></div>
+        </LabelInput>
+      </Row>
     </div>
+  )
+}
+
+const Row = ({ children }: PropsWithChildren) => {
+  return <div className="flex">{children}</div>
+}
+
+const LabelInput = ({
+  label,
+  children,
+}: PropsWithChildren<{ label: ReactNode }>) => {
+  return (
+    <label className="flex w-full flex-col">
+      <span>{label}</span>
+      {children}
+    </label>
   )
 }
