@@ -1,6 +1,4 @@
 import React, { useCallback } from 'react'
-import { useReducer } from 'react'
-import utils from '../utils/utils'
 
 export function Google() {
   const handleInputCardNumber = useCallback<
@@ -8,6 +6,12 @@ export function Google() {
   >((ev) => {
     const formattedCardNumber = ev.currentTarget.value || ''
     const cardNumber = formattedCardNumber.replace(/\D/g, '')
+    const isSelectionDirectionBackward =
+      ev.currentTarget.selectionDirection === 'backward'
+    let cursorPosition: number =
+      (isSelectionDirectionBackward
+        ? ev.currentTarget.selectionEnd
+        : ev.currentTarget.selectionStart) ?? 0
 
     let reformattedCardNumber = ''
     for (let i = 0; i < cardNumber.length; i += 4) {
@@ -16,12 +20,17 @@ export function Google() {
     }
     reformattedCardNumber = reformattedCardNumber.trim()
 
-    console.log({formattedCardNumber, cardNumber, reformattedCardNumber})
-
     ev.currentTarget.value = reformattedCardNumber
-  }, [])
 
-  // TODO add backspace and delete processing
+    // '1234'에서 '5'를 입력하게 되면
+    // cursorPosition이 4에서 6으로 변화되어야 하기 때문
+    if (document.activeElement === ev.currentTarget) {
+      if (ev.currentTarget.value[cursorPosition - 1] === ' ') {
+        cursorPosition += 1
+      }
+      ev.currentTarget.setSelectionRange(cursorPosition, cursorPosition)
+    }
+  }, [])
 
   return (
     <div className="flex flex-col">
@@ -33,11 +42,7 @@ export function Google() {
             autoComplete="cc-number"
             className="m-2 rounded p-2 ring-1 ring-gray-400"
             name="cardNumber"
-            // onBeforeInput={handleBeforeInputCardNumber}
-            // onChange={handleChangeCardNumber}
             onInput={handleInputCardNumber}
-            // onKeyDown={handleKeyDownCardNumber}
-            // pattern="\\d{4}\s\d{4}\s\d{4}\s\d{4}"
             pattern="[0-9]{4}"
             placeholder="카드번호"
             type="tel"
@@ -45,7 +50,6 @@ export function Google() {
         </label>
       </div>
       <div className="flex"></div>
-      {/* <input onKeyPress={handleKeyPress} onKeyUp={handleKeyPress}></input> */}
     </div>
   )
 }
