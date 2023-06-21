@@ -197,6 +197,116 @@ export function Google() {
     [cardNumberInvalidMessage, passwordInvalidMessage]
   )
 
+  /**
+   * 비밀번호 입력란에서 키보드 입력을 처리하는 핸들러
+   *
+   * 숫자 한 글자 입력 시에만 ev.currentTarget의 value를 변경
+   *
+   * 그렇지 않은 경우 처리하지 않음
+   */
+  const handleBeforeInputPassword = useCallback<
+    React.FormEventHandler<HTMLInputElement>
+  >(
+    (ev) => {
+      // 이것은 react 18.2에서 실제 beforeinput 이벤트와 스펙이 다르다.
+      const nativeEvent = ev.nativeEvent as InputEvent
+      const data = nativeEvent.data ?? ''
+      if (data.length !== 1) {
+        return
+      }
+
+      const value = passwordField.current?.value ?? ''
+
+      switch (data) {
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+        case '0':
+          {
+            // 숫자 입력 처리
+            const previousCursorPosition = ev.currentTarget.selectionStart ?? 0
+            const nextValue =
+              value.slice(0, previousCursorPosition) +
+              data +
+              value.slice(previousCursorPosition)
+            const password = nextValue.replace(/\D/g, '').substring(0, 2)
+            const nextCursorPosition = 0 === previousCursorPosition ? 1 : 3
+
+            const firstDigit = password[0] ?? '_'
+            const secondDigit = password[1] ?? '_'
+            const reformattedPassword = `${firstDigit} ${secondDigit} ﹡ ﹡`
+
+            ev.currentTarget.value = reformattedPassword
+            ev.currentTarget.setSelectionRange(
+              nextCursorPosition,
+              nextCursorPosition
+            )
+
+            // handleInputPassword이 실행되지 않도록
+            ev.preventDefault()
+
+            if (secondDigit !== '_') {
+              // 2자리가 다 입력되었을 경우,
+              // 커서가 끝에 있을 경우, 다음 input으로 이동 (순환 탐색)
+              // 비어있거나 invalid한 input으로 이동
+              // 비어있거나 invalid한 input이 없는 경우 이동하지 않음
+              if (
+                (cardNumberField.current?.value || '').replace(/\D/g, '').length ===
+                  0 ||
+                cardNumberInvalidMessage
+              ) {
+                clearTimeout(passwordFieldDebouncer.current)
+                const { currentTarget } = ev
+                passwordFieldDebouncer.current = setTimeout(() => {
+                  if (
+                    (cardNumberField.current?.value || '').replace(/\D/g, '')
+                      .length === 0 ||
+                    cardNumberInvalidMessage
+                  ) {
+                    currentTarget.blur()
+                    cardNumberField.current?.focus()
+                    cardNumberField.current?.setSelectionRange(0, 100)
+                  } else {
+                    clearTimeout(passwordFieldDebouncer.current)
+                  }
+                }, INPUT_DEBOUNCE_DELAY)
+              } else if (
+                (expiryDateField.current?.value || '').length === 0 ||
+                expiryDateInvalidMessage
+              ) {
+                clearTimeout(passwordFieldDebouncer.current)
+                const { currentTarget } = ev
+                passwordFieldDebouncer.current = setTimeout(() => {
+                  if (
+                    (expiryDateField.current?.value || '').length === 0 ||
+                    expiryDateInvalidMessage
+                  ) {
+                    currentTarget.blur()
+                    expiryDateField.current?.focus()
+                    expiryDateField.current?.setSelectionRange(0, 100)
+                  } else {
+                    clearTimeout(passwordFieldDebouncer.current)
+                  }
+                }, INPUT_DEBOUNCE_DELAY)
+              }
+              ev.preventDefault()
+            }
+          }
+
+          break
+        default:
+          break
+      }
+    },
+    [cardNumberInvalidMessage, expiryDateInvalidMessage]
+  )
+
   const handleBlurPassword = useCallback<React.FocusEventHandler<HTMLInputElement>>(
     (ev) => {
       const password = (ev.currentTarget.value || '').replace(/\D/g, '')
@@ -209,14 +319,24 @@ export function Google() {
     []
   )
 
+  /**
+   * 비밀번호 input 이벤트 처리 핸들러
+   *
+   * 2가지 경우를 처리한다
+   *
+   * 1. 비밀번호 입력란에서 숫자 여러 글자를 입력할 경우 (붙여넣기)
+   * 2. 비밀번호 입력란에서 Backspace와 Delete 키를 눌렀을 경우
+   *
+   * 두 가지 모두 숫자만 남기고 나머지는 제거한다
+   *
+   * 숫자만 남긴 후에는 숫자가 2개 이상이면 2개만 남기고 나머지는 제거한다
+   *
+   * formatting을 수행한다
+   *
+   * cursorPosition을 변경한다
+   */
   const handleInputPassword = useCallback<React.FormEventHandler<HTMLInputElement>>(
     (ev) => {
-      console.log('handleinputpassword')
-      console.log(ev.currentTarget.selectionStart)
-      console.log(ev.currentTarget.selectionEnd)
-      console.log(ev.currentTarget.value)
-      console.log(adjustedPasswordFieldCursorPosition.current)
-      console.log(adjustedPasswordFieldCursorPosition.current)
       if (Number(ev.currentTarget.selectionEnd) >= 3) {
         // 2자리가 다 입력되었을 경우,
         // 커서가 끝에 있을 경우, 다음 input으로 이동 (순환 탐색)
@@ -285,19 +405,9 @@ export function Google() {
             adjustedPasswordFieldCursorPosition.current.cursorPosition,
             adjustedPasswordFieldCursorPosition.current.cursorPosition
           )
-        } else if (previousCursorPosition ?? 0 > maxCursorPosition) {
-          console.log(
-            'cursorPosition, previousCursorPosition',
-            maxCursorPosition,
-            previousCursorPosition
-          )
+        } else if (previousCursorPosition >= maxCursorPosition) {
           const cursorPosition = Math.min(maxCursorPosition, previousCursorPosition)
           ev.currentTarget.setSelectionRange(cursorPosition, cursorPosition)
-          // } else {
-          //   ev.currentTarget.setSelectionRange(
-          //     adjustedPasswordFieldCursorPosition.current.cursorPosition + 1,
-          //     adjustedPasswordFieldCursorPosition.current.cursorPosition + 1
-          //   )
         }
       }
 
@@ -337,40 +447,40 @@ export function Google() {
     }
 
     if (ev.key === 'Backspace') {
-      // Backspace 입력 시 커서 포지션 변화
-      //
-      // 2글자가 입력되어 있는 경우
-      //
-      // 커서 위치 2 -> 1
-      // 3 |4 * *
-      // 3| 4 * *
-      //
-      // 커서 위치 4 -> 3
-      // 3 4 |* *
-      // 3 4| * *
-      //
-      // 커서 위치 4 이상 -> 3
-      // 3 4 *| *
-      // 3 4| * *
-      //
-      // 나머지 케이스: 변화 없음
-      //
-      // 1글자가 입력되어 있는 경우
-      //
-      // 커서 위치 2 -> 1
-      // 3 |_ * *
-      // 3| _ * *
-      //
-      // 커서 위치 2 이상 -> 1
-      // 3 _ *| *
-      // 3| _ * *
-      //
-      // 나머지 케이스: 변화 없음
-
       if (ev.currentTarget.value[2] !== '_') {
         if (ev.currentTarget.selectionStart === 2) {
+          // Backspace 입력 시 커서 포지션 변화
+
+          // 2글자가 입력되어 있는 경우
+          //
+          // 커서 위치 2 -> 1
+          // 3 |4 * *
+          // 3| 4 * *
+          //
+          // 커서 위치 4 -> 3
+          // 3 4 |* *
+          // 3 4| * *
+          //
+          // 커서 위치 4 이상 -> 3
+          // 3 4 *| *
+          // 3 4| * *
+          //
+          // 나머지 케이스: 변화 없음
           ev.currentTarget.setSelectionRange(1, 1)
         } else if (
+          // Backspace 입력 시 커서 포지션 변화
+
+          // 1글자가 입력되어 있는 경우
+          //
+          // 커서 위치 2 -> 1
+          // 3 |_ * *
+          // 3| _ * *
+          //
+          // 커서 위치 2 이상 -> 1
+          // 3 _ *| *
+          // 3| _ * *
+          //
+          // 나머지 케이스: 변화 없음
           ev.currentTarget.selectionStart !== null &&
           ev.currentTarget.selectionStart >= 4
         ) {
@@ -390,79 +500,19 @@ export function Google() {
         cursorPosition: ev.currentTarget.selectionStart ?? 0,
       }
     } else if (ev.key === 'Delete') {
-      // Delete 입력 시 커서 포지션 변화
-      // 커서 위치 1 -> 2
-      // 3| 4 * *
-      // 3 |4 * *
-      //
-      // 나머지 케이스: 변화 없음
       if (ev.currentTarget.selectionStart === 1) {
+        // Delete 입력 시 커서 포지션 변화
+        // 커서 위치 1 -> 2
+        // 3| 4 * *
+        // 3 |4 * *
+        //
+        // 나머지 케이스: 변화 없음
         ev.currentTarget.setSelectionRange(2, 2)
       }
       adjustedPasswordFieldCursorPosition.current = {
         type: 'Delete',
         cursorPosition: ev.currentTarget.selectionStart ?? 0,
       }
-    }
-
-    // const formattedPassword = ev.currentTarget.value || ''
-    // const password = formattedPassword.replace(/\D/g, '').substring(0, 2)
-
-    // const previousCursorPosition = ev.currentTarget.selectionStart ?? 0
-    // const cursorPosition = Math.floor((previousCursorPosition + 1) / 2)
-
-    // ev.currentTarget.value = password
-    // ev.currentTarget.setSelectionRange(cursorPosition, cursorPosition)
-  }, [])
-
-  const handleBeforeInputPassword = useCallback<
-    React.FormEventHandler<HTMLInputElement>
-  >((ev) => {
-    console.log('beforeinput')
-    return
-    // 이것은 react 18.2에서 실제 beforeinput 이벤트와 스펙이 다르다.
-    const nativeEvent = ev.nativeEvent as InputEvent
-    const data = nativeEvent.data ?? ''
-    if (data.length !== 1) {
-      return
-    }
-
-    const value = passwordField.current?.value ?? ''
-
-    switch (data) {
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-      case '0':
-        {
-          const previousCursorPosition = ev.currentTarget.selectionStart ?? 0
-          const nextValue =
-            value.slice(0, previousCursorPosition) +
-            data +
-            value.slice(previousCursorPosition)
-          const password = nextValue.replace(/\D/g, '').substring(0, 2)
-          const nextCursorPosition = 0 === previousCursorPosition ? 1 : 3
-
-          const firstDigit = password[0] ?? '_'
-          const secondDigit = password[1] ?? '_'
-          const reformattedPassword = `${firstDigit} ${secondDigit} ﹡ ﹡`
-          // const previousCursorPosition = ev.currentTarget.selectionStart ?? 0
-
-          console.log(reformattedPassword)
-          ev.currentTarget.value = reformattedPassword
-
-          ev.preventDefault()
-        }
-
-        break
-      default:
-        break
     }
   }, [])
 
@@ -516,7 +566,7 @@ export function Google() {
             name="cardNumber"
             onBeforeInput={handleBeforeInputPassword}
             onBlur={handleBlurPassword}
-            // onInput={handleInputPassword}
+            onInput={handleInputPassword}
             onKeyDown={handleKeyDownPassword}
             ref={passwordField}
             required
