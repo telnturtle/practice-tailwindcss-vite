@@ -578,6 +578,11 @@ export function Google() {
           ></input>
         </LabelInput>
       </Row>
+      <Row>
+        <button className="mt-16 w-full rounded-full bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800">
+          저장
+        </button>
+      </Row>
     </div>
   )
 }
