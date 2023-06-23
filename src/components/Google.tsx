@@ -114,7 +114,7 @@ export function Google() {
     if (mm < 1 || mm > 12) {
       setExpiryDateInvalidMessage('올바른 월을 입력해주세요.')
     } else if (yy.length != 2) {
-      setExpiryDateInvalidMessage('올바른 년도를 입력해주세요.')
+      setExpiryDateInvalidMessage('올바른 연도를 입력해주세요.')
     } else if (Number(yy) < currentYearLastTwoDigits) {
       setExpiryDateInvalidMessage('카드가 만료되었습니다.')
     } else if (Number(yy) === currentYearLastTwoDigits && mm < currentMonth) {
@@ -310,7 +310,7 @@ export function Google() {
   const handleBlurPassword = useCallback<React.FocusEventHandler<HTMLInputElement>>(
     (ev) => {
       const password = (ev.currentTarget.value || '').replace(/\D/g, '')
-      if (password.length < 0 && password.length < 2) {
+      if (0 < password.length && password.length < 2) {
         setPasswordInvalidMessage('불완전한 입력란')
       } else {
         setPasswordInvalidMessage('')
@@ -555,7 +555,11 @@ export function Google() {
             type="tel"
           ></input>
         </LabelInput>
-        <LabelInput label={'비밀번호'} errorMessage={passwordInvalidMessage}>
+        <LabelInput
+          label={'비밀번호'}
+          infoMessage={'비밀번호 앞 2자리'}
+          errorMessage={passwordInvalidMessage}
+        >
           <input
             aria-label="비밀번호"
             autoComplete="cc-csc"
@@ -582,18 +586,31 @@ const Row = ({ children }: PropsWithChildren) => {
   return <div className="flex">{children}</div>
 }
 
+interface LabelInputProps {
+  label: ReactNode
+  infoMessage?: ReactNode
+  errorMessage?: ReactNode
+}
+
 const LabelInput = ({
   label,
   children,
+  infoMessage = '',
   errorMessage = '',
-}: PropsWithChildren<{ label: ReactNode; errorMessage?: ReactNode }>) => {
+}: PropsWithChildren<LabelInputProps>) => {
   return (
     <label className="flex w-full flex-col">
       <span>{label}</span>
       {children}
-      <span className="mx-2 h-4 text-start text-xs text-red-400">
-        {errorMessage}
-      </span>
+      {errorMessage ? (
+        <span className="mx-2 h-4 text-start text-xs text-red-400">
+          {errorMessage}
+        </span>
+      ) : (
+        <span className="mx-2 h-4 text-start text-xs text-gray-600">
+          {infoMessage}
+        </span>
+      )}
     </label>
   )
 }
