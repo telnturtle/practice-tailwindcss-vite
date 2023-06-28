@@ -1,4 +1,6 @@
-import React, { PropsWithChildren, ReactNode, useCallback } from 'react'
+import React, { PropsWithChildren, ReactNode, useCallback, useState } from 'react'
+import { SpinnerRing } from './SpinnerRing'
+import { Checkmark } from './Checkmark'
 
 const INPUT_DEBOUNCE_DELAY = 600
 
@@ -23,22 +25,13 @@ export function Google() {
   }>({ type: 'Else', cursorPosition: 0 })
   // 비밀번호 input debouncer ref
   const passwordFieldDebouncer = React.useRef<number>(-1)
-
-  const handleBlurCardNumber = useCallback<
-    React.FocusEventHandler<HTMLInputElement>
-  >((ev) => {
-    const cardNumber = ev.currentTarget.value
-    if (cardNumber.length === 0) {
-      setCardNumberInvalidMessage('카드번호를 입력해주세요.')
-    } else if (
-      cardNumber.length !== 19 &&
-      cardNumber.replace(/\D/g, '').length !== 16
-    ) {
-      setCardNumberInvalidMessage('카드번호가 잘못되었습니다.')
-    } else {
-      setCardNumberInvalidMessage('')
-    }
-  }, [])
+  // submit mocking 상태 (0: 초기 상태, 1: 로딩 상태, 2: 성공 상태)
+  const [submitMockingState, setSubmitMockingState] = React.useState<number>(0)
+  // 폼 key 리듀서
+  const [formKey, dispatchFormKey] = React.useReducer(
+    (state: number) => state + 1,
+    0
+  )
 
   const handleInputCardNumber = useCallback<
     React.FormEventHandler<HTMLInputElement>
@@ -101,28 +94,6 @@ export function Google() {
     },
     [expiryDateInvalidMessage, passwordInvalidMessage]
   )
-
-  const handleBlurExpiryDate = useCallback<
-    React.FocusEventHandler<HTMLInputElement>
-  >((ev) => {
-    const expiryDate = (ev.currentTarget.value || '').replace(/\D/g, '')
-    const mm = Number(expiryDate.slice(0, 2))
-    const yy = expiryDate.slice(2, 4)
-    const currentYear = new Date().getFullYear()
-    const currentMonth = new Date().getMonth() + 1
-    const currentYearLastTwoDigits = currentYear % 100
-    if (mm < 1 || mm > 12) {
-      setExpiryDateInvalidMessage('올바른 월을 입력해주세요.')
-    } else if (yy.length != 2) {
-      setExpiryDateInvalidMessage('올바른 연도를 입력해주세요.')
-    } else if (Number(yy) < currentYearLastTwoDigits) {
-      setExpiryDateInvalidMessage('카드가 만료되었습니다.')
-    } else if (Number(yy) === currentYearLastTwoDigits && mm < currentMonth) {
-      setExpiryDateInvalidMessage('카드가 만료되었습니다.')
-    } else {
-      setExpiryDateInvalidMessage('')
-    }
-  }, [])
 
   const handleInputExpiryDate = useCallback<
     React.FormEventHandler<HTMLInputElement>
@@ -305,18 +276,6 @@ export function Google() {
       }
     },
     [cardNumberInvalidMessage, expiryDateInvalidMessage]
-  )
-
-  const handleBlurPassword = useCallback<React.FocusEventHandler<HTMLInputElement>>(
-    (ev) => {
-      const password = (ev.currentTarget.value || '').replace(/\D/g, '')
-      if (0 < password.length && password.length < 2) {
-        setPasswordInvalidMessage('불완전한 입력란')
-      } else {
-        setPasswordInvalidMessage('')
-      }
-    },
-    []
   )
 
   /**
@@ -516,8 +475,114 @@ export function Google() {
     }
   }, [])
 
+  /**
+   * 카드번호 입력란을 검증하는 핸들러
+   *
+   * 카드번호 입력란이 비어있는 경우, 카드번호가 잘못된 경우
+   *
+   * 카드번호 입력란에 에러 메시지를 표시
+   *
+   * 문제가 없는 경우, 에러 메시지를 제거
+   *
+   * @returns 문제 없을 경우 true, 문제 있을 경우 false
+   */
+  const validateCardNumber = useCallback(() => {
+    const cardNumber = cardNumberField.current?.value ?? ''
+    if (cardNumber.length === 0) {
+      setCardNumberInvalidMessage('카드번호를 입력해주세요.')
+      return false
+    } else if (
+      cardNumber.length !== 19 &&
+      cardNumber.replace(/\D/g, '').length !== 16
+    ) {
+      setCardNumberInvalidMessage('카드번호가 잘못되었습니다.')
+      return false
+    } else {
+      setCardNumberInvalidMessage('')
+      return true
+    }
+  }, [])
+
+  /**
+   * 유효기간 입력란을 검증하는 핸들러
+   *
+   * @returns 문제 없을 경우 true, 문제 있을 경우 false
+   */
+  const validateExpiryDate = useCallback(() => {
+    const expiryDate = (expiryDateField.current?.value ?? '').replace(/\D/g, '')
+    const mm = Number(expiryDate.slice(0, 2))
+    const yy = expiryDate.slice(2, 4)
+    const currentYear = new Date().getFullYear()
+    const currentMonth = new Date().getMonth() + 1
+    const currentYearLastTwoDigits = currentYear % 100
+    if (expiryDate.length === 0) {
+      setExpiryDateInvalidMessage('필수 입력란')
+      return false
+    } else if (mm < 1 || mm > 12) {
+      setExpiryDateInvalidMessage('올바른 월을 입력해주세요.')
+      return false
+    } else if (yy.length != 2) {
+      setExpiryDateInvalidMessage('올바른 연도를 입력해주세요.')
+      return false
+    } else if (Number(yy) < currentYearLastTwoDigits) {
+      setExpiryDateInvalidMessage('카드가 만료되었습니다.')
+      return false
+    } else if (Number(yy) === currentYearLastTwoDigits && mm < currentMonth) {
+      setExpiryDateInvalidMessage('카드가 만료되었습니다.')
+      return false
+    } else {
+      setExpiryDateInvalidMessage('')
+      return true
+    }
+  }, [])
+
+  const validatePassword = useCallback(() => {
+    const password = (passwordField.current?.value ?? '').replace(/\D/g, '')
+    if (password.length === 0) {
+      setPasswordInvalidMessage('필수 입력란')
+      return false
+    } else if (0 < password.length && password.length < 2) {
+      setPasswordInvalidMessage('불완전한 입력란')
+      return false
+    } else {
+      setPasswordInvalidMessage('')
+      return true
+    }
+  }, [])
+
+  /**
+   * 저장 버튼 핸들러
+   *
+   * 저장 버튼을 누르면, 모든 입력란을 검증
+   *
+   * 검증 결과 문제가 없으면, 입력된 카드 정보를 서버에 전송하는 것을 모사
+   *
+   * 문제가 있으면, 문제가 있는 입력란에 에러 메시지를 표시
+   * 
+   * 저장 완료 후 폼 초기화
+   */
+  const handleClickSaveButton = useCallback(() => {
+    const isCardNumberValid = validateCardNumber()
+    const isExpiryDateValid = validateExpiryDate()
+    const isPasswordValid = validatePassword()
+
+    if (isCardNumberValid && isExpiryDateValid && isPasswordValid) {
+      // 로딩 상태 표시 후, 2.4초 후에 로딩 완료 상태 표시 후, 1.2초 후에 로딩 상태 제거 및 폼 초기화
+      setSubmitMockingState(1)
+      setTimeout(() => {
+        setSubmitMockingState(2)
+        setTimeout(() => {
+          setSubmitMockingState(0)
+          dispatchFormKey()
+        }, 2400)
+      }, 2400)
+    }
+  }, [validateCardNumber, validateExpiryDate, validatePassword])
+
+  const inputDisabled = submitMockingState !== 0
+
   return (
-    <div className="flex flex-col">
+    <div className="relative flex flex-col" key={formKey}>
       <Row>
         <LabelInput label={'카드번호'} errorMessage={cardNumberInvalidMessage}>
           <input
@@ -526,8 +591,9 @@ export function Google() {
             className={`m-2 mb-1 rounded p-2 ring-1 ring-gray-400 ${
               cardNumberInvalidMessage ? 'ring-red-500' : ''
             }`}
+            disabled={inputDisabled}
             name="cardNumber"
-            onBlur={handleBlurCardNumber}
+            onBlur={validateCardNumber}
             onInput={handleInputCardNumber}
             pattern="[0-9]{4}"
             placeholder="카드번호"
@@ -545,8 +611,9 @@ export function Google() {
             className={`m-2 mb-1 rounded p-2 ring-1 ring-gray-400 ${
               expiryDateInvalidMessage ? 'ring-red-500' : ''
             }`}
+            disabled={inputDisabled}
             name="expiryDate"
-            onBlur={handleBlurExpiryDate}
+            onBlur={validateExpiryDate}
             onInput={handleInputExpiryDate}
             pattern="\d{2}\s/\s\d{2}"
             placeholder="MM/YY"
@@ -567,9 +634,10 @@ export function Google() {
               passwordInvalidMessage ? 'ring-red-500' : ''
             }`}
             defaultValue={'_ _ ﹡ ﹡'}
+            disabled={inputDisabled}
             name="cardNumber"
             onBeforeInput={handleBeforeInputPassword}
-            onBlur={handleBlurPassword}
+            onBlur={validatePassword}
             onInput={handleInputPassword}
             onKeyDown={handleKeyDownPassword}
             ref={passwordField}
@@ -579,10 +647,14 @@ export function Google() {
         </LabelInput>
       </Row>
       <Row>
-        <button className="mt-16 w-full rounded-full bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800">
+        <button
+          className="mt-16 w-full rounded-full bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800"
+          onClick={handleClickSaveButton}
+        >
           저장
         </button>
       </Row>
+      <Dim on={submitMockingState === 1} complete={submitMockingState === 2} />
     </div>
   )
 }
@@ -619,3 +691,20 @@ const LabelInput = ({
     </label>
   )
 }
+
+const Dim = ({
+  on = false,
+  complete = false,
+}: {
+  on?: boolean
+  complete?: boolean
+}) => (
+  <div
+    className={`transition- center absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center bg-opacity-30 transition-colors duration-1000 ${
+      // on || complete ? 'visible bg-gray-300' : 'transparent bg-transparent'
+      on || complete ? 'visible bg-gray-300' : 'hidden bg-transparent'
+    }`}
+  >
+    {complete ? <Checkmark /> : <SpinnerRing></SpinnerRing>}
+  </div>
+)
