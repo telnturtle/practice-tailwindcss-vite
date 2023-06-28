@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, ReactNode, useCallback, useState } from 'react'
+import React, { PropsWithChildren, ReactNode, useCallback } from 'react'
 import { SpinnerRing } from './SpinnerRing'
 import { Checkmark } from './Checkmark'
 
@@ -14,6 +14,8 @@ export function Google() {
 
   // 카드번호 input ref
   const cardNumberField = React.useRef<HTMLInputElement>(null)
+  // 카드번호 input 필드에서 backspace가 일어났을 경우 알려주는 ref
+  const cardNumberFieldBackspace = React.useRef<boolean>(false)
   // 유효기간 input ref
   const expiryDateField = React.useRef<HTMLInputElement>(null)
   // 비밀번호 input ref
@@ -32,6 +34,13 @@ export function Google() {
     (state: number) => state + 1,
     0
   )
+
+  // 카드번호 keydown 핸들러
+  const handleKeyDownCardNumber = useCallback<
+    React.KeyboardEventHandler<HTMLInputElement>
+  >((ev) => {
+    cardNumberFieldBackspace.current = ev.key === 'Backspace'
+  }, [])
 
   const handleInputCardNumber = useCallback<
     React.FormEventHandler<HTMLInputElement>
@@ -81,9 +90,17 @@ export function Google() {
       // '1234'에서 '5'를 입력하게 되면
       // cursorPosition이 이렇게 변화되어야 하기 때문
       // 입력 전: 4, 핸들러 진입: 5, 핸들러 실행 뒤: 6
+      //
+      // '1234 5|6' (|는 커서 위치) 에서 Backspace를 누르면
+      // cursorPosition이 이렇게 변화되어야 하기 때문
+      // 입력 전: 6, 핸들러 진입: 5, 핸들러 실행 뒤: 4
       if (document.activeElement === ev.currentTarget) {
         if (ev.currentTarget.value[cursorPosition - 1] === ' ') {
-          cursorPosition += 1
+          if (cardNumberFieldBackspace.current) {
+            cursorPosition -= 1
+          } else {
+            cursorPosition += 1
+          }
         }
         ev.currentTarget.setSelectionRange(cursorPosition, cursorPosition)
       }
@@ -558,7 +575,7 @@ export function Google() {
    * 검증 결과 문제가 없으면, 입력된 카드 정보를 서버에 전송하는 것을 모사
    *
    * 문제가 있으면, 문제가 있는 입력란에 에러 메시지를 표시
-   * 
+   *
    * 저장 완료 후 폼 초기화
    */
   const handleClickSaveButton = useCallback(() => {
@@ -595,6 +612,7 @@ export function Google() {
             name="cardNumber"
             onBlur={validateCardNumber}
             onInput={handleInputCardNumber}
+            onKeyDown={handleKeyDownCardNumber}
             pattern="[0-9]{4}"
             placeholder="카드번호"
             ref={cardNumberField}
