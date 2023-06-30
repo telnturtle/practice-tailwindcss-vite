@@ -605,7 +605,7 @@ export function Google() {
           <input
             aria-label="카드번호"
             autoComplete="cc-number"
-            className={`m-2 mb-1 rounded p-2 ring-1 ring-gray-400 ${
+            className={`w-full rounded p-2 ring-1 ring-gray-400 ${
               cardNumberInvalidMessage ? 'ring-red-500' : ''
             }`}
             disabled={inputDisabled}
@@ -626,7 +626,7 @@ export function Google() {
           <input
             aria-label="유효기간"
             autoComplete="cc-exp"
-            className={`m-2 mb-1 rounded p-2 ring-1 ring-gray-400 ${
+            className={`w-full rounded p-2 ring-1 ring-gray-400 ${
               expiryDateInvalidMessage ? 'ring-red-500' : ''
             }`}
             disabled={inputDisabled}
@@ -648,7 +648,7 @@ export function Google() {
           <input
             aria-label="비밀번호"
             autoComplete="cc-csc"
-            className={`m-2 mb-1 rounded p-2 ring-1 ring-gray-400 ${
+            className={`w-full rounded p-2 ring-1 ring-gray-400 ${
               passwordInvalidMessage ? 'ring-red-500' : ''
             }`}
             defaultValue={'_ _ ﹡ ﹡'}
@@ -666,7 +666,7 @@ export function Google() {
       </Row>
       <Row>
         <button
-          className="mt-16 w-full rounded-full bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800"
+          className="mt-16 flex-auto rounded-full bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800"
           onClick={handleClickSaveButton}
         >
           저장
@@ -694,19 +694,21 @@ const LabelInput = ({
   errorMessage = '',
 }: PropsWithChildren<LabelInputProps>) => {
   return (
-    <label className="flex w-full flex-col">
-      <span>{label}</span>
-      {children}
-      {errorMessage ? (
-        <span className="mx-2 h-4 text-start text-xs text-red-400">
-          {errorMessage}
-        </span>
-      ) : (
-        <span className="mx-2 h-4 text-start text-xs text-gray-600">
-          {infoMessage}
-        </span>
-      )}
-    </label>
+    <div className="w-full p-2 pb-1">
+      <label className="flex w-full flex-col">
+        <span>{label}</span>
+        {children}
+        {errorMessage ? (
+          <span className="mx-2 h-4 text-start text-xs text-red-400">
+            {errorMessage}
+          </span>
+        ) : (
+          <span className="mx-2 h-4 text-start text-xs text-gray-600">
+            {infoMessage}
+          </span>
+        )}
+      </label>
+    </div>
   )
 }
 
@@ -719,7 +721,6 @@ const Dim = ({
 }) => (
   <div
     className={`transition- center absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center bg-opacity-30 transition-colors duration-1000 ${
-      // on || complete ? 'visible bg-gray-300' : 'transparent bg-transparent'
       on || complete ? 'visible bg-gray-300' : 'hidden bg-transparent'
     }`}
   >
