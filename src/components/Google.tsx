@@ -603,6 +603,7 @@ export function Google() {
       <Row>
         <LabelInput label={'카드번호'} errorMessage={cardNumberInvalidMessage}>
           <input
+            aria-invalid={!!cardNumberInvalidMessage}
             aria-label="카드번호"
             autoComplete="cc-number"
             className={`w-full rounded p-2 ring-1 ring-gray-400 ${
@@ -624,6 +625,7 @@ export function Google() {
       <Row>
         <LabelInput label={'유효기간'} errorMessage={expiryDateInvalidMessage}>
           <input
+            aria-invalid={!!expiryDateInvalidMessage}
             aria-label="유효기간"
             autoComplete="cc-exp"
             className={`w-full rounded p-2 ring-1 ring-gray-400 ${
@@ -646,6 +648,7 @@ export function Google() {
           errorMessage={passwordInvalidMessage}
         >
           <input
+            aria-invalid={!!passwordInvalidMessage}
             aria-label="비밀번호"
             autoComplete="cc-csc"
             className={`w-full rounded p-2 ring-1 ring-gray-400 ${
@@ -699,14 +702,14 @@ const LabelInput = ({
         <span>{label}</span>
         {children}
         {errorMessage ? (
-          <span className="mx-2 h-4 text-start text-xs text-red-400">
+          <span role="alert" className="mx-2 h-4 text-start text-xs text-red-400">
             {errorMessage}
           </span>
-        ) : (
-          <span className="mx-2 h-4 text-start text-xs text-gray-600">
+        ) : infoMessage ? (
+          <span role="status" className="mx-2 h-4 text-start text-xs text-gray-600">
             {infoMessage}
           </span>
-        )}
+        ) : null}
       </label>
     </div>
   )
