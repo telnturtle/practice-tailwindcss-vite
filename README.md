@@ -44,6 +44,12 @@ Google Play, Notion의 카드 정보 입력 폼을 모사해 보았다.
 
 ChatGPT를 이용해서 커밋 메시지를 작성했다.
 
+이렇게 프롬프트를 입력한다.
+
+> 문장을 영어로 git commit message로 작성해줘. git commit 메시지는 과거형 동사를 사용하지 않아. 알맞은 동사 형태를 사용해 줘.
+
+그리고 한국어로 문장을 입력하면, ChatGPT가 영어로 번역해준다.
+
 예시:
 
 ```
@@ -51,12 +57,15 @@ User
 내가 말하는 내용의 git commit message를 영어로 써줘
 
 ChatGPT
-Sure, I can help you translate your git commit message into English. Please provide the content you want to translate.
+Certainly! Please provide me with the sentence you would like to translate into an English git commit message, using the appropriate verb form without using the past tense.
 
 User
-카드번호 입력 필드를 추가했어
+README에 tailwindcss 초기 설정하기 내용을 추가했어.
+
 ChatGPT
-Added card number input field.
+"Add instructions for setting up Tailwind CSS in README"
 ```
 
-평소 내가 작성하던 커밋 메시지와 다른 점은, 챗지피티는 과거형 동사로 작성했지만 나는 현재형 동사를 사용한다. 예시: Add card number input field.
+### TailwindCSS 초기 설정하기
+
+참고 https://tailwindcss.com/docs/guides/vite
